@@ -88,11 +88,13 @@ CMD="$CMD $IMAGE_NAME"
 if [ $# -gt 0 ]; then
     # Map the first argument (input file) to the container's path if it's in the current directory
     if [[ -f "$1" && "$1" == */* ]]; then
-        # Check if the file is in the input directory
-        RELATIVE_PATH="${1#$INPUT_DIR/}"
-        if [[ "$RELATIVE_PATH" != "$1" ]]; then
-            # File is in the input directory, adjust the path for container
-            ARGS="data/input/$RELATIVE_PATH"
+        # Get the filename without path
+        FILE_NAME=$(basename "$1")
+        
+        # Check if the file is in the data directory
+        if [[ "$1" == *"data/"* ]]; then
+            # File is in the data directory, use the proper container path
+            ARGS="/app/data/input/$FILE_NAME"
             shift
             CMD="$CMD python translate.py $ARGS $@"
         else
