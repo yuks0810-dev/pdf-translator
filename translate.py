@@ -74,7 +74,7 @@ def translate_with_openai(text: str, source_lang: str, target_lang: str, model: 
     
     return response.choices[0].message.content
 
-def translate_with_gemini(text: str, source_lang: str, target_lang: str, model: str = "gemini-1.5-pro") -> str:
+def translate_with_gemini(text: str, source_lang: str, target_lang: str, model: str = "gemini-2.5-pro-preview-03-25") -> str:
     """Translate text using Google Gemini API"""
     if not gemini_available:
         raise ValueError("Google Gemini API key not configured")
@@ -115,13 +115,27 @@ def run_pdfmathtranslate(input_file: str, output_file: str, source_lang_code: st
     """Run PDFMathTranslate CLI tool with appropriate arguments"""
     
     try:
+        # Make sure output_file is a proper path, not just a filename
+        # Ensure output goes to /app/data/output directory
+        if not output_file.startswith('/app/data/output/'):
+            output_filename = os.path.basename(output_file)
+            output_file = f"/app/data/output/{output_filename}"
+        
+        # Handle output path - PDFMathTranslate expects a directory without .pdf extension
+        file_base = os.path.splitext(output_file)[0]
+        # PDFMathTranslate will create a directory with the file's basename
+        output_dir = file_base
+        
+        # Create the output directory structure first to prevent errors
+        os.makedirs(output_dir, exist_ok=True)
+        
         # Basic command using PDFMathTranslate
         command = [
             "pdf2zh", 
             input_file,
             "-li", source_lang_code,
             "-lo", target_lang_code,
-            "-o", output_file
+            "-o", output_dir
         ]
         
         # If using a custom engine, add those arguments
@@ -136,11 +150,31 @@ def run_pdfmathtranslate(input_file: str, output_file: str, source_lang_code: st
         if result.stderr:
             print(f"PDFMathTranslate errors: {result.stderr}")
             
-        return True
+        # The actual output file will be in the created directory
+        # PDFMathTranslate creates file with base_name-mono.pdf inside the directory
+        input_basename = os.path.splitext(os.path.basename(input_file))[0]
+        actual_output = f"{output_dir}/{input_basename}-mono.pdf"
+        
+        # Check if the file exists and rename it to the expected output path
+        if os.path.exists(actual_output):
+            import shutil
+            shutil.move(actual_output, output_file)
+            print(f"Renamed output file from {actual_output} to {output_file}")
+            return True
+        else:
+            print(f"Warning: Expected output file {actual_output} not found")
+            # Check what files were created in the output directory
+            if os.path.exists(output_dir):
+                print(f"Files in output directory: {os.listdir(output_dir)}")
+            return False
+            
     except subprocess.CalledProcessError as e:
         print(f"Error running PDFMathTranslate: {e}")
         print(f"Output: {e.stdout}")
         print(f"Error: {e.stderr}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error: {e}")
         return False
 
 def extract_text_segments(pdf_path: str) -> List[str]:
