@@ -1,0 +1,63 @@
+# APIキーを含む環境変数ファイル（セキュリティのため）
+.env
+
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+ENV/
+
+# 入出力PDFファイル
+data/
+*.pdf
+
+# Docker関連
+.dockerignore
+
+# エディタ/IDE関連
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.project
+.pydevproject
+.settings/
+
+# ログファイル
+*.log
+logs/
+
+# ユニットテスト/カバレッジレポート
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+
+# モデルキャッシュファイル（大きいファイル）
+.models/
+.cache/
