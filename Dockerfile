@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
     requests
 
 # Clone and install PDFMathTranslate
-RUN git clone https://github.com/ptyin/PDFMathTranslate.git /tmp/pdfmathtranslate \
+RUN git clone https://github.com/Byaidu/PDFMathTranslate.git /tmp/pdfmathtranslate \
     && cd /tmp/pdfmathtranslate \
     && pip install -e . \
     && cd / \
