@@ -74,7 +74,7 @@ def translate_with_openai(text: str, source_lang: str, target_lang: str, model: 
     
     return response.choices[0].message.content
 
-def translate_with_gemini(text: str, source_lang: str, target_lang: str, model: str = "gemini-2.5-pro-preview-03-25") -> str:
+def translate_with_gemini(text: str, source_lang: str, target_lang: str, model: str = "gemini-2.5-pro-exp-03-25") -> str:
     """Translate text using Google Gemini API"""
     if not gemini_available:
         raise ValueError("Google Gemini API key not configured")
@@ -115,19 +115,18 @@ def run_pdfmathtranslate(input_file: str, output_file: str, source_lang_code: st
     """Run PDFMathTranslate CLI tool with appropriate arguments"""
     
     try:
-        # Make sure output_file is a proper path, not just a filename
-        # Ensure output goes to /app/data/output directory
-        if not output_file.startswith('/app/data/output/'):
-            output_filename = os.path.basename(output_file)
-            output_file = f"/app/data/output/{output_filename}"
+        # Create structured output directory based on language
+        input_basename = os.path.splitext(os.path.basename(input_file))[0]
+        target_lang_name = next((lang for lang, code in LANGUAGE_CODES.items() if code == target_lang_code), target_lang_code)
         
-        # Handle output path - PDFMathTranslate expects a directory without .pdf extension
-        file_base = os.path.splitext(output_file)[0]
-        # PDFMathTranslate will create a directory with the file's basename
-        output_dir = file_base
+        # Create a structured output directory format
+        structured_output_dir = f"/app/data/output/translations/{target_lang_name}/{input_basename}"
         
-        # Create the output directory structure first to prevent errors
-        os.makedirs(output_dir, exist_ok=True)
+        # Ensure the directory exists
+        os.makedirs(structured_output_dir, exist_ok=True)
+        
+        # PDFMathTranslate will create files in this directory
+        output_dir = structured_output_dir
         
         # Basic command using PDFMathTranslate
         command = [
@@ -150,19 +149,44 @@ def run_pdfmathtranslate(input_file: str, output_file: str, source_lang_code: st
         if result.stderr:
             print(f"PDFMathTranslate errors: {result.stderr}")
             
-        # The actual output file will be in the created directory
-        # PDFMathTranslate creates file with base_name-mono.pdf inside the directory
-        input_basename = os.path.splitext(os.path.basename(input_file))[0]
-        actual_output = f"{output_dir}/{input_basename}-mono.pdf"
+        # The generated files will be in the structured directory
+        # PDFMathTranslate creates files with patterns like: base_name-mono.pdf, base_name-dual.pdf
+        expected_mono_output = f"{output_dir}/{input_basename}-mono.pdf"
+        expected_dual_output = f"{output_dir}/{input_basename}-dual.pdf"
         
-        # Check if the file exists and rename it to the expected output path
-        if os.path.exists(actual_output):
+        # Final output paths with more descriptive names
+        final_mono_output = f"{output_dir}/{input_basename}_{target_lang_name}_translated.pdf"
+        final_dual_output = f"{output_dir}/{input_basename}_{target_lang_name}_bilingual.pdf"
+        
+        success = False
+        
+        # Rename the output files to more descriptive names if they exist
+        if os.path.exists(expected_mono_output):
             import shutil
-            shutil.move(actual_output, output_file)
-            print(f"Renamed output file from {actual_output} to {output_file}")
+            shutil.move(expected_mono_output, final_mono_output)
+            print(f"Created translated PDF: {final_mono_output}")
+            success = True
+            
+        if os.path.exists(expected_dual_output):
+            import shutil
+            shutil.move(expected_dual_output, final_dual_output)
+            print(f"Created bilingual PDF: {final_dual_output}")
+            success = True
+            
+        # If the requested output_file doesn't match our structure, copy the mono version there
+        if success and output_file != final_mono_output:
+            import shutil
+            # Ensure the output directory exists
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            # Copy the translated file to the requested output location
+            shutil.copy(final_mono_output, output_file)
+            print(f"Copied translated PDF to requested location: {output_file}")
+            
+        if success:
+            print(f"Translation files available in: {output_dir}")
             return True
         else:
-            print(f"Warning: Expected output file {actual_output} not found")
+            print(f"Warning: Expected output files not found")
             # Check what files were created in the output directory
             if os.path.exists(output_dir):
                 print(f"Files in output directory: {os.listdir(output_dir)}")

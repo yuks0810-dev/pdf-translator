@@ -113,8 +113,16 @@ chmod +x run.sh
 
 ### 学術論文の翻訳
 
+**using chatGPT**
 ```bash
 ./run.sh data/research_paper.pdf -s english -t japanese -e openai -m gpt-4o
+```
+
+**using gemini**
+- モデル一覧: https://ai.google.dev/gemini-api/docs/models?hl=ja
+
+```bash
+./run.sh data/research_paper.pdf -s english -t japanese -e gemini -m gemini-2.5-pro-exp-03-25
 ```
 
 ### 数学の教科書の翻訳
