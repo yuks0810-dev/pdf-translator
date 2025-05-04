@@ -25,7 +25,8 @@ RUN pip install --no-cache-dir \
     anthropic \
     python-dotenv \
     reportlab \
-    requests
+    requests \
+    PyPDF2>=3.0.0
 
 # Clone and install PDFMathTranslate
 RUN git clone https://github.com/Byaidu/PDFMathTranslate.git /tmp/pdfmathtranslate \
